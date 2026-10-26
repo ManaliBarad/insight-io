@@ -18,6 +18,7 @@ import { dashboardReducer, initialState, statusLabel } from './state/dashboardRe
 export default function App() {
   const [state, dispatch] = useReducer(dashboardReducer, initialState);
   const onArrive = useCallback(() => dispatch({ type: 'mission/completed' }), []);
+  const clearToast = useCallback((id) => dispatch({ type: 'toast/clear', id }), []);
   const { engine, telemetry, map, loading } = useRobotEngine({ onArrive });
   const { sim, world } = engine;
   const [videoOverride, setVideoOverride] = useState(null);
@@ -43,7 +44,6 @@ export default function App() {
 
   useEffect(() => {
     world.onZoom = (zoom) => dispatch({ type: 'zoom/set', view: 'map', zoom });
-    world.onFollowBreak = () => dispatch({ type: 'follow/toggle' });
     world.onPick = ({ x, y }) => {
       const zone = zoneAt(map?.zones || [], x, y);
       dispatch({ type: 'goal/set', x, y, blocked: zone?.type === 'nogo' ? zone.name : null });
@@ -67,15 +67,18 @@ export default function App() {
 
   const onNav = (id) => {
     if (id === 'dashboard') {
-      dispatch({ type: 'nav/set', nav: id });
-      world.fitView();
-    } else if (id === 'map') {
       dispatch({ type: 'view/set', view: 'map' });
-    } else if (id === 'goal') dispatch({ type: 'goal/startPicking' });
+      world.fitView();
+    } else if (id === 'map') dispatch({ type: 'view/set', view: 'map' });
+    else if (id === 'goal') dispatch({ type: 'goal/startPicking' });
     else if (id === 'zones') dispatch({ type: 'zones/toggle' });
     else if (id === 'follow') dispatch({ type: 'follow/toggle' });
     else if (id === 'telemetry') dispatch({ type: 'telemetry/toggle' });
   };
+
+  // relatedTarget is null only when the drag leaves the window entirely
+  // (moving between child elements also fires dragleave).
+  const onDragLeave = (e) => !e.relatedTarget && setDragging(false);
 
   const onDrop = async (e) => {
     e.preventDefault();
@@ -105,9 +108,9 @@ export default function App() {
   const noOdom = telemetry.rosStatus === 'connected' && !telemetry.external;
   const signal = noOdom ? { bars: 2, label: 'Weak' } : { bars: 4, label: 'Strong' };
   const statusTone = state.estop ? 'danger' : state.mission.state === 'paused' ? 'warn' : state.mission.state === 'completed' ? 'ok' : '';
+  // Sidebar highlight: the page itself, plus whichever toggles are on.
   const nav = {
-    dashboard: state.nav === 'dashboard',
-    map: state.mainView === 'map' && state.nav !== 'dashboard',
+    dashboard: true,
     goal: state.picking,
     zones: state.showZones,
     follow: state.follow,
@@ -121,7 +124,7 @@ export default function App() {
         e.preventDefault();
         setDragging(true);
       }}
-      onDragLeave={(e) => e.currentTarget === e.target && setDragging(false)}
+      onDragLeave={onDragLeave}
       onDrop={onDrop}
     >
       <Sidebar active={nav} onSelect={onNav} />
@@ -201,7 +204,7 @@ export default function App() {
           pointCount={loading.done ? world.pointCount : 0}
           onClose={() => dispatch({ type: 'telemetry/toggle' })}
         />
-        <Toast toast={state.toast} onDone={(id) => dispatch({ type: 'toast/clear', id })} />
+        <Toast toast={state.toast} onDone={clearToast} />
         <DropOverlay visible={dragging} />
         {state.estop && <div className="estop-frame" aria-hidden="true" />}
       </main>

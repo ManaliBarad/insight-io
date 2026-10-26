@@ -18,7 +18,6 @@ export function Joystick({ enabled, active, onPress, onDisabledPress }) {
     },
     onPointerUp: () => enabled && onPress(dir, false),
     onPointerCancel: () => enabled && onPress(dir, false),
-    onLostPointerCapture: () => enabled && onPress(dir, false),
   });
 
   return (

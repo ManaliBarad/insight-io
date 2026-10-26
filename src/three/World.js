@@ -172,9 +172,6 @@ export class World {
         this.onZoom?.(z);
       }
     });
-    controls.addEventListener('start', () => {
-      if (this.follow) this.onFollowBreak?.();
-    });
 
     const resize = () => {
       const { clientWidth: w, clientHeight: h } = container;
@@ -323,10 +320,7 @@ export class World {
   }
 
   setZonesVisible(visible) {
-    this.zones.visible = visible;
-    this.zones.traverse((o) => {
-      if (o instanceof CSS2DObject) o.element.style.display = visible ? '' : 'none';
-    });
+    this.zones.visible = visible; // CSS2DRenderer hides the labels of invisible groups too
   }
 
   setPose({ x, y, yaw }) {

@@ -6,26 +6,14 @@ import './Views.css';
 //   2. A video file (public/media/camera.mp4, or one dropped onto the page)
 //   3. A simulated first-person render from the robot in the point cloud
 export function CameraView({ engine, videoUrl, rosLive, zoom }) {
-  const [video, setVideo] = useState(null); // resolved playable URL or null
+  const [videoFailed, setVideoFailed] = useState(false);
   const simHost = useRef(null);
   const img = useRef(null);
 
-  // Only use the video if it really exists (Vite's SPA fallback answers 200 + HTML).
-  useEffect(() => {
-    let cancelled = false;
-    if (videoUrl.startsWith('blob:')) {
-      setVideo(videoUrl);
-      return undefined;
-    }
-    fetch(videoUrl, { method: 'HEAD' })
-      .then((r) => !cancelled && setVideo(r.ok && r.headers.get('content-type')?.startsWith('video') ? videoUrl : null))
-      .catch(() => !cancelled && setVideo(null));
-    return () => {
-      cancelled = true;
-    };
-  }, [videoUrl]);
+  // A new URL (e.g. a dropped file) gets a fresh chance to play.
+  useEffect(() => setVideoFailed(false), [videoUrl]);
 
-  const source = rosLive ? 'ros' : video ? 'video' : 'sim';
+  const source = rosLive ? 'ros' : videoFailed ? 'sim' : 'video';
 
   useEffect(() => {
     if (source !== 'sim') return undefined;
@@ -46,7 +34,8 @@ export function CameraView({ engine, videoUrl, rosLive, zoom }) {
     <div className="view view--camera">
       <div className="view__media" style={{ transform: `scale(${scale})` }}>
         {source === 'ros' && <img ref={img} alt="Robot camera" />}
-        {source === 'video' && <video key={video} src={video} autoPlay muted loop playsInline onError={() => setVideo(null)} />}
+        {/* A missing file errors out (the dev server answers with HTML), which switches to the sim. */}
+        {source === 'video' && <video key={videoUrl} src={videoUrl} autoPlay muted loop playsInline onError={() => setVideoFailed(true)} />}
         {source === 'sim' && <div className="view__canvas" ref={simHost} />}
       </div>
       <span className={`view__badge view__badge--${source}`}>

@@ -14,7 +14,6 @@ export const initialState = {
   zoom: { map: 45, camera: 0 }, // 0..100 per view; the slider drives the main one
   showZones: true,
   follow: false,
-  nav: 'dashboard',
   telemetryOpen: false,
   toast: null, // { id, text, tone }
 };
@@ -41,12 +40,9 @@ export function dashboardReducer(state, action) {
         action.mode === 'manual' && state.mission.state === 'running'
           ? { ...state.mission, state: 'paused' }
           : state.mission;
-      return {
-        ...state,
-        mode: action.mode,
-        mission,
-        toast: toast(action.mode === 'manual' ? 'Manual control: drive with W A S D' : 'Autonomous mode'),
-      };
+      let text = 'Manual control: drive with W A S D';
+      if (action.mode === 'auto') text = mission.state === 'paused' ? 'Autonomous mode: press ▶ to resume the mission' : 'Autonomous mode';
+      return { ...state, mode: action.mode, mission, toast: toast(text) };
     }
 
     case 'mission/togglePause': {
@@ -82,15 +78,18 @@ export function dashboardReducer(state, action) {
       };
     case 'goal/cancelPicking':
       return { ...state, picking: false };
-    case 'goal/set':
+    case 'goal/set': {
       if (action.blocked) return { ...state, picking: false, toast: toast(`Goal is inside a No-Go zone (${action.blocked})`, 'danger') };
+      // A running or paused mission is simply redirected; a finished one goes back to idle.
+      const finished = state.mission.state === 'completed';
       return {
         ...state,
         picking: false,
         goal: { x: action.x, y: action.y },
-        mission: state.mission.state === 'running' ? state.mission : { ...state.mission, state: state.mission.state === 'paused' ? 'paused' : 'idle' },
+        mission: finished ? { ...state.mission, state: 'idle' } : state.mission,
         toast: toast('Goal set. Press INITIATE to go', 'ok'),
       };
+    }
 
     case 'estop/toggle': {
       const estop = !state.estop;
@@ -103,8 +102,6 @@ export function dashboardReducer(state, action) {
       };
     }
 
-    case 'nav/set':
-      return { ...state, nav: action.nav };
     case 'zones/toggle':
       return { ...state, showZones: !state.showZones, toast: toast(state.showZones ? 'Zones hidden' : 'Zones visible') };
     case 'follow/toggle':
