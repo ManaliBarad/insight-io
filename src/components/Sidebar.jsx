@@ -3,7 +3,7 @@ import './Sidebar.css';
 
 const ITEMS = [
   { id: 'dashboard', label: 'Dashboard', Icon: IconGrid },
-  { id: 'map', label: 'Map view', Icon: IconMap },
+  { id: 'swap', label: 'Swap map / camera', Icon: IconMap },
   { id: 'goal', label: 'Drop a goal', Icon: IconPin },
   { id: 'zones', label: 'Toggle zones', Icon: IconZones },
   { id: 'follow', label: 'Follow robot', Icon: IconTarget },
@@ -13,7 +13,7 @@ const ITEMS = [
 export function Sidebar({ active, onSelect }) {
   return (
     <nav className="sidebar" aria-label="Main">
-      <div className="sidebar__logo" aria-label="ERIC Robotics">
+      <div className="sidebar__logo" role="img" aria-label="ERIC Robotics">
         <span className="sidebar__wordmark">
           ER<i>|</i>C
         </span>
@@ -35,9 +35,10 @@ export function Sidebar({ active, onSelect }) {
           </li>
         ))}
       </ul>
-      <button type="button" className="sidebar__item sidebar__user" aria-label="Operator profile" data-tip="Operator">
+      {/* Signed-in operator badge (no account system in this demo). */}
+      <span className="sidebar__item sidebar__user" role="img" aria-label="Operator" data-tip="Operator">
         <IconUser size={18} />
-      </button>
+      </span>
     </nav>
   );
 }

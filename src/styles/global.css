@@ -72,6 +72,7 @@ input:focus-visible {
   display: grid;
   grid-template-columns: var(--sidebar-w) 1fr;
   grid-template-areas: 'sidebar stage';
+  grid-template-rows: minmax(0, 1fr); /* never grow taller than the screen */
   height: 100dvh;
   width: 100vw;
 }
@@ -163,6 +164,64 @@ input:focus-visible {
     bottom: 12px;
     right: 10px;
     gap: 12px;
+  }
+  .hud--zoom {
+    display: none;
+  }
+}
+
+/* Narrow phones: drop the small captions so the two top pills fit side by side. */
+@media (max-width: 400px) {
+  .pill__key,
+  .pill--mode > .pill__label {
+    display: none;
+  }
+  .pill__value {
+    max-width: 30vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* Landscape phones: little height, so the controls move into a row at the bottom. */
+@media (max-height: 500px) and (orientation: landscape) {
+  :root {
+    --pip-w: 30vw;
+    --pip-bottom: 10px;
+  }
+  .hud--tl,
+  .hud--tr {
+    top: 52px;
+  }
+  .hud--right {
+    top: auto;
+    bottom: 10px;
+    transform: none;
+    flex-direction: row;
+    align-items: flex-end;
+    gap: 12px;
+  }
+  .hud--right .estop {
+    width: 56px;
+    height: 56px;
+  }
+  .hud--right .joystick {
+    transform: scale(0.8);
+    transform-origin: bottom right;
+  }
+  .sidebar {
+    padding: 8px 0;
+    gap: 2px;
+  }
+  .sidebar__logo {
+    margin-bottom: 6px;
+  }
+  .sidebar__list {
+    gap: 2px;
+  }
+  .sidebar__item {
+    width: 34px;
+    height: 34px;
   }
   .hud--zoom {
     display: none;

@@ -3,7 +3,7 @@ import './ZoomSlider.css';
 
 export function ZoomSlider({ value, onChange, label }) {
   return (
-    <div className="zoom" aria-label={label}>
+    <div className="zoom" role="group" aria-label={label}>
       <button type="button" className="zoom__btn" onClick={() => onChange(value + 10)} aria-label="Zoom in">
         <IconPlus size={11} />
       </button>

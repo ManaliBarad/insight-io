@@ -12,7 +12,7 @@ export function TopStatusBar({ battery, signal, failsafe, system, rosStatus, vie
   const pct = Math.round(battery);
   return (
     <header className="statusbar">
-      <div className="statusbar__bar" role="status" aria-live="polite">
+      <div className="statusbar__bar">
         <span className="statusbar__item" title="Battery">
           <b>{pct}%</b>
           <IconBattery level={pct} />
