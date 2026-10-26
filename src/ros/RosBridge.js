@@ -58,7 +58,8 @@ export class RosBridge {
 
     sub(t.odom, 'nav_msgs/msg/Odometry', 40, (m) => {
       const p = m.pose.pose;
-      this.handlers.onOdom?.(p.position.x, p.position.y, quatToYaw(p.orientation));
+      const v = m.twist?.twist;
+      this.handlers.onOdom?.(p.position.x, p.position.y, quatToYaw(p.orientation), v?.linear.x ?? 0, v?.angular.z ?? 0);
     });
     sub(t.points, 'sensor_msgs/msg/PointCloud2', 1000, (m) => {
       const cloud = decodePointCloud2(m);

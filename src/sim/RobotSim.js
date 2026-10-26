@@ -30,12 +30,13 @@ export class RobotSim {
     this.control = { ...this.control, ...control };
   }
 
-  setExternalPose(x, y, yaw) {
+  // Pose + measured velocity from ROS /odom.
+  setExternalPose(x, y, yaw, linear, angular) {
+    // Don't count the jump from the sim pose to the first real pose as travel.
+    if (this.external) this.distance += Math.hypot(x - this.pose.x, y - this.pose.y);
     this.external = true;
-    const dx = x - this.pose.x;
-    const dy = y - this.pose.y;
-    this.distance += Math.hypot(dx, dy);
     this.pose = { x, y, yaw };
+    this.vel = { linear, angular };
   }
 
   // Velocity the robot should be commanded with right now.
@@ -64,11 +65,12 @@ export class RobotSim {
 
   step(dt) {
     const cmd = this.desiredCommand();
-    const hardStop = this.control.estop;
-    this.vel.linear = hardStop ? 0 : approach(this.vel.linear, cmd.linear, 4, dt);
-    this.vel.angular = hardStop ? 0 : approach(this.vel.angular, cmd.angular, 6, dt);
-
+    // With ROS the real robot moves; we only compute the command.
     if (!this.external) {
+      const hardStop = this.control.estop;
+      this.vel.linear = hardStop ? 0 : approach(this.vel.linear, cmd.linear, 4, dt);
+      this.vel.angular = hardStop ? 0 : approach(this.vel.angular, cmd.angular, 6, dt);
+
       const yaw = this.pose.yaw + this.vel.angular * dt;
       const nx = this.pose.x + Math.cos(yaw) * this.vel.linear * dt;
       const ny = this.pose.y + Math.sin(yaw) * this.vel.linear * dt;

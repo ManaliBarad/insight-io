@@ -20,7 +20,7 @@ export function useRobotEngine({ onArrive }) {
       sim,
       world,
       ros: null,
-      last: { odom: 0, image: 0, battery: 0, cmd: 0 },
+      last: { odom: 0, image: 0, battery: 0, cmd: 0, driving: false },
       imageListeners,
       onImage: (cb) => {
         imageListeners.add(cb);
@@ -28,9 +28,7 @@ export function useRobotEngine({ onArrive }) {
       },
     };
   });
-  const [telemetry, setTelemetry] = useState(() => snapshot(engine, 'connecting', null));
-  if (import.meta.env.DEV) window.__insight = engine; // debugging handle (dev server only)
-  const [map, setMap] = useState(null);
+  const [telemetry, setTelemetry] = useState(() => snapshot(engine, 'connecting', null));  const [map, setMap] = useState(null);
   const [loading, setLoading] = useState({ progress: 0, done: false, error: null });
   const arriveRef = useRef(onArrive);
   arriveRef.current = onArrive;
@@ -67,9 +65,9 @@ export function useRobotEngine({ onArrive }) {
     const { sim, world, last, imageListeners } = engine;
     const ros = new RosBridge(config.ros, {
       onStatus: () => {},
-      onOdom: (x, y, yaw) => {
+      onOdom: (x, y, yaw, linear, angular) => {
         last.odom = performance.now();
-        sim.setExternalPose(x, y, yaw);
+        sim.setExternalPose(x, y, yaw, linear, angular);
       },
       onPoints: ({ positions, colors }) => world.setCloudArrays(positions, colors),
       onImage: (src) => {
@@ -99,9 +97,13 @@ export function useRobotEngine({ onArrive }) {
       const cmd = sim.step(dt);
       if (engine.ros?.status === 'connected' && now - last.cmd > CMD_PERIOD_MS) {
         last.cmd = now;
-        // In AUTO with ROS, navigation is delegated to Nav2 via /goal_pose.
+        // In AUTO with ROS, navigation is delegated to Nav2 via /goal_pose, so
+        // /cmd_vel is only sent in MANUAL or on E-stop. When we stop sending,
+        // send one zero twist so the robot doesn't keep the last command.
         const drive = sim.control.mode === 'manual' || sim.control.estop;
         if (drive) engine.ros.publishCmdVel(cmd.linear, cmd.angular);
+        else if (last.driving) engine.ros.publishCmdVel(0, 0);
+        last.driving = drive;
       }
       return sim.pose;
     });
