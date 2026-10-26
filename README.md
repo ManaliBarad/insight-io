@@ -34,8 +34,8 @@ After `npm install` the app needs no internet connection. The fonts are bundled 
 
 | What | How |
 | --- | --- |
-| **Camera video** | Put an MP4 at `public/media/camera.mp4` (committed with the repo, so keep it small, under ~20 MB), or **drag a video file onto the dashboard**. |
-| **Point-cloud map** | **Drag any `.pcd` file** (ASCII, binary or binary_compressed) onto the dashboard, or change `cloud` in `public/data/map.json`. |
+| **Camera video** | Put an MP4 at `public/media/camera.mp4`, or **drag a video file onto the dashboard**. The file is not git-ignored, so commit it to ship it with the repo (keep it under ~20 MB). |
+| **Point-cloud map** | **Drag any `.pcd` file** (ASCII, binary or binary_compressed) onto the dashboard; the sample warehouse's zones and walls are cleared. Or change `cloud` in `public/data/map.json`. |
 | **Zones / start pose** | Edit `public/data/map.json` (map frame, metres). |
 | **Regenerate sample map** | `npm run generate:map` |
 
@@ -54,14 +54,21 @@ When no video and no ROS camera are available, the camera view falls back to a *
 | **Quick Goal → Initiate** | Click QUICK GOAL, then click the map to drop a goal (goals inside no-go zones are rejected). INITIATE starts the mission; the robot drives there and the mission completes when it arrives. |
 | **Mode AUTO / MANUAL** | MANUAL enables the direction pad and the **W A S D / arrow keys**. Switching to MANUAL pauses the running mission. |
 | **Emergency stop** | Halts all motion immediately, shows a red frame around the screen, sets Failsafe to *Engaged* and blocks resuming until released. |
-| **Sidebar** | Dashboard (fit map), Map view, Drop goal, Toggle zones, Follow robot, Telemetry drawer. |
-| **Responsive** | Desktop, tablet and phone. Below 640 px the sidebar becomes a bottom nav bar and the controls compact. |
+| **Sidebar** | Dashboard (fit map), Swap map / camera, Drop goal, Toggle zones, Follow robot, Telemetry drawer. Icons stay highlighted while their toggle is on. |
+| **Responsive** | Desktop, tablet and phone (portrait and landscape). Below 640 px the sidebar becomes a bottom nav bar and the controls compact; on landscape phones the E-stop and pad move into a row at the bottom. |
 
 ---
 
 ## ROS 2 integration (bonus)
 
-The dashboard connects to a [rosbridge](https://github.com/RobotWebTools/rosbridge_suite) websocket through **roslibjs**. If it can't connect, it keeps running on the built-in simulator and retries in the background. The status bar chip shows which source is active.
+The dashboard connects to a [rosbridge](https://github.com/RobotWebTools/rosbridge_suite) websocket through **roslibjs**. If it can't connect, it keeps running on the built-in simulator and retries in the background (8 s, 16 s, 32 s, then every 60 s; the browser logs each failed attempt). The status bar chip shows which source is active.
+
+**Try it without ROS:** a small mock rosbridge fakes a robot (odometry, the warehouse point cloud, a camera image, battery) and reacts to `/cmd_vel` and `/goal_pose`:
+
+```bash
+npm run mock:ros     # terminal 1: ws://localhost:9090
+npm run dev          # terminal 2: the chip turns "ROS Live"
+```
 
 ```bash
 # Terminal 1: rosbridge
@@ -82,9 +89,14 @@ npm run dev
 | `/camera/image_raw/compressed` | `sensor_msgs/msg/CompressedImage` | Camera view |
 | `/battery_state` | `sensor_msgs/msg/BatteryState` | Battery % |
 | `/cmd_vel` ← | `geometry_msgs/msg/Twist` | Published in MANUAL mode (10 Hz) and on E-stop (zero twist) |
-| `/goal_pose` ← | `geometry_msgs/msg/PoseStamped` | Published on INITIATE (works with Nav2) |
+| `/goal_pose` ← | `geometry_msgs/msg/PoseStamped` | Published when a mission starts, resumes or is redirected (Nav2's goal topic) |
 
-**Testing status:** the ROS path was tested end to end against a mock rosbridge server that speaks the rosbridge v2 JSON protocol. Odometry, PointCloud2 decoding, compressed camera images and battery all came through, and `/cmd_vel` and `/goal_pose` were published as expected. It has not yet been tested against a physical robot.
+**Testing status:** tested end to end with `npm run mock:ros` (rosbridge v2 JSON protocol). It has not been tested against a physical robot.
+
+**Known limitations**
+
+- Pause and E-stop do not cancel a Nav2 goal (that needs the `navigate_to_pose` action, which roslibjs 1.x doesn't support for ROS 2). E-stop publishes a zero twist on `/cmd_vel` at 10 Hz; a real robot still needs a hardware E-stop.
+- No TF lookups: `/points` and `/odom` are drawn in the frame they arrive in, so publish the cloud in `map`/`odom` for a fixed map. Each `/points` message replaces the displayed cloud.
 
 Topic names and the bridge URL can be changed with env vars. Copy `.env.example` to `.env.local` and edit it. Set `VITE_ROS_ENABLED=false` to turn ROS off completely.
 
@@ -98,7 +110,7 @@ Topic names and the bridge URL can be changed with env vars. Copy `.env.example`
 src/
 ├── App.jsx                  Layout + wiring of UI state → sim / 3D world / ROS
 ├── config.js                Env-driven config (ROS URL, topics, media paths, robot limits)
-├── state/dashboardReducer.js  All UI state (mode, mission, goal, E-stop, view, zoom…) as a pure reducer
+├── state/dashboardReducer.js  All UI state (mode, mission, goal, E-stop, view, zoom…) in one reducer
 ├── hooks/
 │   ├── useRobotEngine.js    Creates World + RobotSim + RosBridge; 60 fps loop; 4 Hz telemetry to React
 │   └── useDriveInput.js     Merges keyboard + direction pad into the manual drive command
@@ -114,6 +126,7 @@ src/
 └── components/              Sidebar, TopStatusBar, Pills (status / buttons / mode), EmergencyStop,
                              Joystick, ZoomSlider, ViewStage, MapView, CameraView, Overlays
 scripts/generate-pcd.mjs     Builds the sample warehouse .pcd + map.json (seeded, reproducible)
+scripts/mock-rosbridge.mjs   Fake robot over the rosbridge protocol, for trying the ROS path without ROS
 ```
 
 **Design decisions**

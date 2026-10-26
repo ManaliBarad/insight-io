@@ -8,7 +8,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "generate:map": "node scripts/generate-pcd.mjs"
+    "generate:map": "node scripts/generate-pcd.mjs",
+    "mock:ros": "node scripts/mock-rosbridge.mjs"
   },
   "dependencies": {
     "@fontsource/inter": "5.1.0",
@@ -19,6 +20,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "4.7.0",
-    "vite": "6.4.5"
+    "vite": "6.4.5",
+    "ws": "8.22.0"
   }
 }
