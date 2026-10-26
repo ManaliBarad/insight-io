@@ -1,0 +1,60 @@
+.zoom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.zoom__btn {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--navy-800);
+  color: #fff;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.15s;
+}
+.zoom__btn:hover {
+  transform: scale(1.12);
+}
+
+/* Vertical range: rotate a horizontal input so styling stays cross-browser. */
+.zoom__range {
+  --len: 96px;
+  appearance: none;
+  -webkit-appearance: none;
+  width: var(--len);
+  height: 18px;
+  margin: calc(var(--len) / 2 - 9px) calc(9px - var(--len) / 2);
+  transform: rotate(-90deg);
+  background: transparent;
+  cursor: pointer;
+}
+.zoom__range::-webkit-slider-runnable-track {
+  height: 3px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--navy-800) var(--fill), rgb(21 27 39 / 0.25) var(--fill));
+}
+.zoom__range::-moz-range-track {
+  height: 3px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--navy-800) var(--fill), rgb(21 27 39 / 0.25) var(--fill));
+}
+.zoom__range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  margin-top: -4.5px;
+  border-radius: 50%;
+  background: var(--navy-800);
+  border: 2px solid #fff;
+  box-shadow: var(--shadow-sm);
+}
+.zoom__range::-moz-range-thumb {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--navy-800);
+  border: 2px solid #fff;
+}

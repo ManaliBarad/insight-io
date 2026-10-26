@@ -1,0 +1,50 @@
+.estop {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  filter: drop-shadow(0 6px 14px rgb(0 0 0 / 0.25));
+  transition: transform 0.15s;
+}
+.estop svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.estop:hover {
+  transform: scale(1.04);
+}
+.estop:active {
+  transform: scale(0.96);
+}
+.estop__text {
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  fill: #8c0f0a;
+}
+.estop__cap {
+  transform-origin: 50px 50px;
+  transition: transform 0.25s cubic-bezier(0.3, 0.7, 0.3, 1);
+}
+.estop.is-engaged .estop__cap {
+  transform: scale(0.9) rotate(-35deg);
+}
+.estop.is-engaged {
+  animation: estop-pulse 1.1s infinite;
+}
+@keyframes estop-pulse {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 0 rgb(229 72 77 / 0.8));
+  }
+  50% {
+    filter: drop-shadow(0 0 14px rgb(229 72 77 / 0.95));
+  }
+}
+
+@media (max-width: 640px) {
+  .estop {
+    width: 60px;
+    height: 60px;
+  }
+}

@@ -1,0 +1,215 @@
+.stage__views {
+  position: absolute;
+  inset: 0;
+}
+
+/* ---- Panes: one full-bleed, one picture-in-picture ---------------------- */
+.pane {
+  position: absolute;
+  overflow: hidden;
+  background: var(--map-bg);
+  transition:
+    left 0.5s var(--ease),
+    bottom 0.5s var(--ease),
+    width 0.5s var(--ease),
+    height 0.5s var(--ease),
+    border-radius 0.5s var(--ease),
+    box-shadow 0.5s var(--ease);
+}
+.pane--main {
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+  z-index: 1;
+}
+.pane--pip {
+  left: var(--pip-left);
+  bottom: var(--pip-bottom);
+  width: var(--pip-w);
+  height: calc(var(--pip-w) * 0.6);
+  border-radius: 10px;
+  box-shadow: 0 0 0 3px #fff, var(--shadow-lg);
+  z-index: 15;
+}
+
+.pane__hit {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 6px;
+  cursor: pointer;
+}
+.pane__hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  background: rgb(21 27 39 / 0.75);
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.2s, transform 0.2s;
+}
+.pane__hit:hover .pane__hint,
+.pane__hit:focus-visible .pane__hint {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---- Shared view chrome --------------------------------------------------- */
+.view {
+  position: absolute;
+  inset: 0;
+}
+.view__canvas {
+  position: absolute;
+  inset: 0;
+}
+.view__canvas canvas {
+  display: block;
+}
+.view--map .view__canvas canvas {
+  cursor: grab;
+}
+.view--map .view__canvas canvas:active {
+  cursor: grabbing;
+}
+.view--map.is-picking .view__canvas canvas {
+  cursor: crosshair;
+}
+.view--map.is-picking::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  box-shadow: inset 0 0 0 3px var(--blue);
+  pointer-events: none;
+}
+
+.map-labels {
+  position: absolute !important;
+  inset: 0;
+  pointer-events: none;
+}
+.zone-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: #b4303c;
+  background: rgb(255 255 255 / 0.7);
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.zone-label--nogo::before {
+  content: '⛔ ';
+}
+.pane--pip .zone-label {
+  display: none;
+}
+
+.view--camera {
+  background: #0d1118;
+}
+.view__media {
+  position: absolute;
+  inset: 0;
+  transition: transform 0.25s ease;
+}
+.view__media video,
+.view__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.view__badge {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: #fff;
+  background: rgb(0 0 0 / 0.45);
+  backdrop-filter: blur(4px);
+}
+.view__badge i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--yellow);
+}
+.view__badge--ros i,
+.view__badge--video i {
+  background: var(--red);
+  animation: dot-pulse 1.2s infinite;
+}
+.pane--pip .view__badge {
+  right: 6px;
+  bottom: 6px;
+  font-size: 8px;
+  padding: 2px 5px;
+}
+
+.view__loading,
+.view__error {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--map-bg);
+}
+.view__error {
+  color: var(--red);
+}
+.pane--pip .view__loading span,
+.pane--pip .view__progress {
+  display: none;
+}
+.view__spinner {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 3px solid rgb(21 27 39 / 0.15);
+  border-top-color: var(--navy-800);
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.view__progress {
+  width: 160px;
+  height: 4px;
+  border-radius: 4px;
+  background: rgb(21 27 39 / 0.12);
+  overflow: hidden;
+}
+.view__progress i {
+  display: block;
+  height: 100%;
+  background: var(--navy-800);
+  transition: width 0.2s;
+}
