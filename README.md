@@ -34,7 +34,7 @@ After `npm install` the app needs no internet connection. The fonts are bundled 
 
 | What | How |
 | --- | --- |
-| **Camera video** | Put an MP4/WebM at `public/media/camera.mp4`, or **drag a video file onto the dashboard**. |
+| **Camera video** | Put an MP4 at `public/media/camera.mp4` (committed with the repo, so keep it small, under ~20 MB), or **drag a video file onto the dashboard**. |
 | **Point-cloud map** | **Drag any `.pcd` file** (ASCII, binary or binary_compressed) onto the dashboard, or change `cloud` in `public/data/map.json`. |
 | **Zones / start pose** | Edit `public/data/map.json` (map frame, metres). |
 | **Regenerate sample map** | `npm run generate:map` |
@@ -83,6 +83,8 @@ npm run dev
 | `/battery_state` | `sensor_msgs/msg/BatteryState` | Battery % |
 | `/cmd_vel` ← | `geometry_msgs/msg/Twist` | Published in MANUAL mode (10 Hz) and on E-stop (zero twist) |
 | `/goal_pose` ← | `geometry_msgs/msg/PoseStamped` | Published on INITIATE (works with Nav2) |
+
+**Testing status:** the ROS path was tested end to end against a mock rosbridge server that speaks the rosbridge v2 JSON protocol. Odometry, PointCloud2 decoding, compressed camera images and battery all came through, and `/cmd_vel` and `/goal_pose` were published as expected. It has not yet been tested against a physical robot.
 
 Topic names and the bridge URL can be changed with env vars. Copy `.env.example` to `.env.local` and edit it. Set `VITE_ROS_ENABLED=false` to turn ROS off completely.
 
