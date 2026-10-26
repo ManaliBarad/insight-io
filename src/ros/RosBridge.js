@@ -9,41 +9,44 @@ const quatToYaw = ({ x, y, z, w }) => Math.atan2(2 * (w * z + x * y), 1 - 2 * (y
 export class RosBridge {
   constructor(config, handlers) {
     this.config = config;
-    this.handlers = handlers; // { onStatus, onOdom, onPoints, onImage, onBattery }
+    this.handlers = handlers; // { onOdom, onPoints, onImage, onBattery }
+    // 'disabled' | 'connecting' | 'connected' | 'offline' (read by the UI's telemetry poll)
     this.status = config.enabled ? 'connecting' : 'disabled';
     this.ros = null;
     this.topics = {};
     this.retry = 0;
+    this.attempts = 0;
     this.disposed = false;
-  }
-
-  setStatus(status) {
-    if (status === this.status) return;
-    this.status = status;
-    this.handlers.onStatus?.(status);
   }
 
   async connect() {
     if (!this.config.enabled || this.disposed) return;
-    // Loaded lazily so a missing / failing ROS stack never blocks the UI.
-    const { default: ROSLIB } = await import('roslib');
-    if (this.disposed) return;
-    this.ROSLIB = ROSLIB;
-    // Stay on 'offline' during background retries so the UI doesn't flicker.
-    if (this.status !== 'offline') this.setStatus('connecting');
-
-    const ros = new ROSLIB.Ros({ url: this.config.url });
+    let ros;
+    try {
+      // Loaded lazily so a missing / failing ROS stack never blocks the UI.
+      const { default: ROSLIB } = await import('roslib');
+      if (this.disposed) return;
+      this.ROSLIB = ROSLIB;
+      ros = new ROSLIB.Ros({ url: this.config.url });
+    } catch (err) {
+      console.warn(`ROS disabled: cannot connect to "${this.config.url}"`, err);
+      this.status = 'offline';
+      return;
+    }
     this.ros = ros;
     ros.on('connection', () => {
-      this.setStatus('connected');
+      this.attempts = 0;
+      this.status = 'connected';
       this.subscribe();
     });
     ros.on('error', () => {}); // 'close' always follows; handled there
     ros.on('close', () => {
-      if (this.ros !== ros) return;
+      if (this.ros !== ros || this.disposed) return;
       this.unsubscribe();
-      this.setStatus('offline');
-      if (!this.disposed) this.retry = setTimeout(() => this.connect(), this.config.retryMs);
+      this.status = 'offline';
+      // Back off (8 s, 16 s, 32 s, then every 60 s) to keep the console quiet without ROS.
+      const delay = Math.min(this.config.retryMs * 2 ** this.attempts++, 60_000);
+      this.retry = setTimeout(() => this.connect(), delay);
     });
   }
 

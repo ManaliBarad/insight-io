@@ -16,8 +16,9 @@ export function Joystick({ enabled, active, onPress, onDisabledPress }) {
       e.currentTarget.setPointerCapture(e.pointerId);
       onPress(dir, true);
     },
-    onPointerUp: () => enabled && onPress(dir, false),
-    onPointerCancel: () => enabled && onPress(dir, false),
+    // Always release, even if driving was disabled while the button was held.
+    onPointerUp: () => onPress(dir, false),
+    onPointerCancel: () => onPress(dir, false),
   });
 
   return (

@@ -45,10 +45,10 @@ export default function App() {
   useEffect(() => {
     world.onZoom = (zoom) => dispatch({ type: 'zoom/set', view: 'map', zoom });
     world.onPick = ({ x, y }) => {
-      const zone = zoneAt(map?.zones || [], x, y);
+      const zone = zoneAt(sim.map.zones, x, y);
       dispatch({ type: 'goal/set', x, y, blocked: zone?.type === 'nogo' ? zone.name : null });
     };
-  }, [world, map]);
+  }, [world, sim]);
 
   useEffect(() => {
     const onKey = (e) => e.key === 'Escape' && dispatch({ type: 'goal/cancelPicking' });
@@ -57,19 +57,22 @@ export default function App() {
   }, []);
 
   // ---- actions --------------------------------------------------------------
-  const initiate = () => {
-    if (state.goal && !state.estop && engine.ros?.status === 'connected') {
-      const yaw = Math.atan2(state.goal.y - telemetry.y, state.goal.x - telemetry.x);
-      engine.ros.publishGoal(state.goal, yaw);
-    }
-    dispatch({ type: 'mission/initiate' });
-  };
+  // With ROS, (re)send the goal to Nav2 whenever a mission starts, resumes or is redirected.
+  const missionRunning = state.mission.state === 'running' && state.mode === 'auto' && !state.estop;
+  const rosConnected = telemetry.rosStatus === 'connected';
+  useEffect(() => {
+    if (!missionRunning || !state.goal || !rosConnected) return;
+    const { x, y } = sim.pose;
+    engine.ros?.publishGoal(state.goal, Math.atan2(state.goal.y - y, state.goal.x - x));
+  }, [missionRunning, state.goal, rosConnected, engine, sim]);
+
+  const initiate = () => dispatch({ type: 'mission/initiate' });
 
   const onNav = (id) => {
     if (id === 'dashboard') {
       dispatch({ type: 'view/set', view: 'map' });
       world.fitView();
-    } else if (id === 'map') dispatch({ type: 'view/set', view: 'map' });
+    } else if (id === 'swap') dispatch({ type: 'view/swap' });
     else if (id === 'goal') dispatch({ type: 'goal/startPicking' });
     else if (id === 'zones') dispatch({ type: 'zones/toggle' });
     else if (id === 'follow') dispatch({ type: 'follow/toggle' });
@@ -88,6 +91,9 @@ export default function App() {
     if (/\.pcd$/i.test(file.name)) {
       try {
         await world.loadPcd(await file.arrayBuffer());
+        // The sample warehouse's zones and walls don't apply to a different map.
+        sim.setMap({ zones: [], bounds: null });
+        world.setZones([]);
         world.fitView();
         dispatch({ type: 'toast/show', text: `Loaded ${file.name}`, tone: 'ok' });
       } catch {
@@ -111,6 +117,7 @@ export default function App() {
   // Sidebar highlight: the page itself, plus whichever toggles are on.
   const nav = {
     dashboard: true,
+    swap: state.mainView === 'camera',
     goal: state.picking,
     zones: state.showZones,
     follow: state.follow,

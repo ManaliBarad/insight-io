@@ -209,6 +209,7 @@ export class World {
       renderer.domElement.removeEventListener('pointerup', onUp);
       controls.dispose();
       renderer.dispose();
+      renderer.forceContextLoss(); // free the WebGL context now; browsers cap how many exist
       container.replaceChildren();
       this.views.map = null;
     };
@@ -233,6 +234,7 @@ export class World {
     return () => {
       ro.disconnect();
       renderer.dispose();
+      renderer.forceContextLoss();
       container.replaceChildren();
       this.views.camera = null;
     };
@@ -243,10 +245,10 @@ export class World {
     if (!map) return;
     const { camera, controls } = map;
     const dir = camera.position.clone().sub(controls.target);
-    const d = dir.length();
-    const target = zoomToDistance(v);
-    if (Math.abs(d - target) / d < 0.01) return;
-    camera.position.copy(controls.target).add(dir.setLength(target));
+    // The slider value is rounded, so ignore changes under one step; otherwise
+    // the wheel zoom would snap back to the rounded value while it animates.
+    if (Math.abs(distanceToZoom(dir.length()) - v) < 1) return;
+    camera.position.copy(controls.target).add(dir.setLength(zoomToDistance(v)));
   }
 
   // Top-down view framing the whole cloud.
@@ -313,6 +315,7 @@ export class World {
       child.traverse((o) => {
         if (o instanceof CSS2DObject) o.element.remove();
         o.geometry?.dispose();
+        o.material?.dispose();
       });
       this.zones.remove(child);
     }

@@ -20,7 +20,7 @@ export function useRobotEngine({ onArrive }) {
       sim,
       world,
       ros: null,
-      last: { odom: 0, image: 0, battery: 0, cmd: 0, driving: false },
+      last: { odom: 0, image: 0, cmd: 0, driving: false }, // timestamps (ms) + last drive state
       imageListeners,
       onImage: (cb) => {
         imageListeners.add(cb);
@@ -28,7 +28,8 @@ export function useRobotEngine({ onArrive }) {
       },
     };
   });
-  const [telemetry, setTelemetry] = useState(() => snapshot(engine, 'connecting', null));  const [map, setMap] = useState(null);
+  const [telemetry, setTelemetry] = useState(() => snapshot(engine, 'connecting', null));
+  const [map, setMap] = useState(null);
   const [loading, setLoading] = useState({ progress: 0, done: false, error: null });
   const arriveRef = useRef(onArrive);
   arriveRef.current = onArrive;
@@ -64,7 +65,6 @@ export function useRobotEngine({ onArrive }) {
   useEffect(() => {
     const { sim, world, last, imageListeners } = engine;
     const ros = new RosBridge(config.ros, {
-      onStatus: () => {},
       onOdom: (x, y, yaw, linear, angular) => {
         last.odom = performance.now();
         sim.setExternalPose(x, y, yaw, linear, angular);
@@ -75,7 +75,6 @@ export function useRobotEngine({ onArrive }) {
         imageListeners.forEach((cb) => cb(src));
       },
       onBattery: (pct) => {
-        last.battery = performance.now();
         sim.battery = pct;
       },
     });
