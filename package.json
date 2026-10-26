@@ -1,0 +1,24 @@
+{
+  "name": "insight-io",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Insight.IO robot operations dashboard (ERIC Robotics FSD assignment)",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "generate:map": "node scripts/generate-pcd.mjs"
+  },
+  "dependencies": {
+    "@fontsource/inter": "5.1.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "roslib": "1.4.1",
+    "three": "0.169.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "4.7.0",
+    "vite": "6.4.5"
+  }
+}
