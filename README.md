@@ -1,3 +1,9 @@
+
+
+Uploading insight-io-demo.mp4…
+https://drive.google.com/file/d/1kGOkiWjHvHCymyBYMmZzbDQRpFY5nGkm/view?usp=sharing
+
+
 # Insight.IO: Robot Operations Dashboard
 
 A self-hosted recreation of ERIC Robotics' **Insight.IO** dashboard. It shows a live **3D point-cloud map** and a **camera feed** that swap places, with mission controls, a WASD direction pad, an emergency stop and an optional **ROS 2 integration** through rosbridge.
